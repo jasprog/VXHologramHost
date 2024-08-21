@@ -112,7 +112,7 @@ public class NPC : MonoBehaviour
                 if (entity.category == "Greeting")
                 {
                     //response = "Hi, welcome!";
-                    response = "Hi, welcome to the school of computing technologies at R-M-I-T, a global university of research, enterprise and innovataion.";
+                    response = "Hi, welcome to the school of computing technologies at R-M-I-T, a global university of research, enterprise and innovation.";
                     animator.SetTrigger("WaveTrigger");
                     StartCoroutine(UpdateOutputText(response));
                     HelloWorld.Instance.SynthesizeSpeech(response);
@@ -121,7 +121,7 @@ public class NPC : MonoBehaviour
                 }
                 else if (entity.category == "Research")
                 {
-                    response = "";
+                    response = "R-M-I-T conducts research that are considered usable and useful, where we driven to explore relevant and high quality knowledge and innovation that people care about.";
                     StartCoroutine(UpdateOutputText(response));
                     HelloWorld.Instance.SynthesizeSpeech(response);
                     string trigger = "IsTalking" + getRandomTrigger(1);
@@ -129,6 +129,26 @@ public class NPC : MonoBehaviour
                     animator.SetTrigger(trigger1);
                     break;
                 }
+                else if (entity.category == "Enrolment")
+                {
+                    response = "In order to enrol to RMIT, enter 'Enrolment RMIT' on your search engine. There you will options below whether its enrolling as new student, continuing student, exchange student and much more. After clicking on your preferred option a guide will be displayed with your given circumstances.";
+                    StartCoroutine(UpdateOutputText(response));
+                    HelloWorld.Instance.SynthesizeSpeech(response);
+                    string trigger = "IsTalking" + getRandomTrigger(1);
+                    string trigger1 = trigger;
+                    animator.SetTrigger(trigger1);
+                    break;    
+                }
+                else if (entity.category == "Looking Glass Display")
+                {
+                    response = "The Looking Glass Display is a 3D holographic display that allows users to view and interact with three-dimensional content without needing special glasses. It creates a realistic, immersive experience by rendering multiple perspectives of a 3D image, making it ideal for applications in design, gaming, and visualization.";
+                    StartCoroutine(UpdateOutputText(response));
+                    HelloWorld.Instance.SynthesizeSpeech(response);
+                    string trigger = "IsTalking" + getRandomTrigger(1);
+                    string trigger1 = trigger;
+                    animator.SetTrigger(trigger1);
+                    break;    
+                }                
                 else if (entity.category == "Facilities")
                 {
                     response = "R-M-I-T has cutting edge facilities for supercomputing, robotics, cyber security, AI, and virtual reality.";
@@ -141,7 +161,7 @@ public class NPC : MonoBehaviour
                 }
                 else if (entity.category == "School")
                 {
-                    response = "The school of computing technologies has three main areas- cyber secutiry, artificial intelligence, and interaction and techology.";
+                    response = "The school of computing technologies has three main areas- cyber security, artificial intelligence, and interaction and technology.";
                     StartCoroutine(UpdateOutputText(response));
                     HelloWorld.Instance.SynthesizeSpeech(response);
                     string trigger = "IsTalking" + getRandomTrigger(1);
@@ -217,7 +237,7 @@ public class NPC : MonoBehaviour
                     }
                     else if (entity.category == "Virtual Reality")
                     {
-                        response = "Virtual, augmented and annotated reality is one of the research areas of the VX Lab. This includes use of the MetaQuest Pro, surveying, instruction, science, gaming and industry.";
+                        response = "Virtual, augmented and annotated reality is one of the research areas of the VXLab. This includes use of the MetaQuest Pro, surveying, instruction, science, gaming and industry.";
                    
                     StartCoroutine(UpdateOutputText(response));
                     HelloWorld.Instance.SynthesizeSpeech(response);
@@ -248,7 +268,7 @@ public class NPC : MonoBehaviour
                     }
                     else if (entity.category == "Laboratory")
                     {
-                        response = "This is the Virtual Experiences  Lab, where we have cutting edge equipment and facilities.";
+                        response = "This is the Virtual Experiences Lab, where we have cutting edge equipment and facilities.";
                     StartCoroutine(UpdateOutputText(response));
                     HelloWorld.Instance.SynthesizeSpeech(response);
                     string trigger = "IsTalking" + getRandomTrigger(1);
@@ -304,6 +324,27 @@ public class NPC : MonoBehaviour
                     animator.SetTrigger("WaveTrigger");
                     break;
                 }
+                else if (entity.category == "Research")
+                {
+                    response = "R-M-I-T conducts research that are considered usable and useful, where we driven to explore relevant and high quality knowledge and innovation that people care about.";
+                    HelloWorld.Instance.SynthesizeSpeech(response);
+                    animator.SetBool("IsTalking", true);
+                    break;
+                }
+                else if (entity.category == "Enrolment")
+                {
+                    response = "In order to enrol to RMIT, enter 'Enrolment RMIT' on your search engine. There you will options below whether its enrolling as new student, continuing student, exchange student and much more. After clicking on your preferred option a guide will be displayed with your given circumstances.";
+                    HelloWorld.Instance.SynthesizeSpeech(response);
+                    animator.SetBool("IsTalking", true);
+                    break;
+                }
+                else if (entity.category == "Looking Glass Display")
+                {
+                    response = "The Looking Glass Display is a 3D holographic display that allows users to view and interact with three-dimensional content without needing special glasses. It creates a realistic, immersive experience by rendering multiple perspectives of a 3D image, making it ideal for applications in design, gaming, and visualization.";
+                    HelloWorld.Instance.SynthesizeSpeech(response);
+                    animator.SetBool("IsTalking", true);
+                    break;
+                }                
                 else if (entity.category == "Management")
                 {
                     response = "Please contact Dr Ian Peake, lab manager, for all booking and access enquiries.";
@@ -362,7 +403,7 @@ public class NPC : MonoBehaviour
                 }
                 else if (entity.category == "Virtual Reality")
                 {
-                    response = "Virtual, augmented and annotated reality is one of the research areas of the VX Lab. This includes use of the MetaQuest Pro, surveying, instruction, science, gaming and industry.";
+                    response = "Virtual, augmented and annotated reality is one of the research areas of the VXLab. This includes use of the MetaQuest Pro, surveying, instruction, science, gaming and industry.";
                     HelloWorld.Instance.SynthesizeSpeech(response);
                     animator.SetBool("IsTalking", true);
                     break;
@@ -458,7 +499,7 @@ public class NPC : MonoBehaviour
                 }
                 else if (entity.text == "Tiago")
                 {
-                    response = "Tiago is to the right, the white robot.";
+                    response = "Tiago is the white robot to your right.";
                     HelloWorld.Instance.SynthesizeSpeech(response);
                     animator.SetBool("IsTalking", true);
                 }
