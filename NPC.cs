@@ -1,4 +1,4 @@
-
+//Vladislava Simakov
 using System;
 using System.Threading;
 using UnityEngine;
@@ -11,7 +11,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using UniVRM10;
 using Unity.VisualScripting;
-
+using System.IO;
+using System.Linq;
 public class NPC : MonoBehaviour
 {
     private SpeechConfig speechConfig;
@@ -19,11 +20,13 @@ public class NPC : MonoBehaviour
     public Animator animator;
     public Text output_text;
     public Vector3 avator_posi;
+    public string responseFilePath;
     private float _timeUntilBored;
     private int _numberOfBoredAnimations;
     private bool _isBored;
     private float _idleTime;
     private int _boredAnimation;
+    private EntityResponses _responses;
 
     public enum Direction
     {
@@ -52,48 +55,63 @@ public class NPC : MonoBehaviour
         _boredAnimation = _boredAnimation * 2 - 1;
         //animator.SetFloat("BoredIdle", 0);
         animator.SetFloat("BoredIdle", 1.46f);
+
+        //Load the Json responses
+        string json = File.ReadAllText(Application.dataPath + "/ResponseDataFile.json");
+        _responses = JsonUtility.FromJson<EntityResponses>(json);
+
+
     }
 
     public void Destroy()
     {
         Destroy(gameObject);
     }
-/*
-    public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo)
-    {
-        ResetIdle();
-    }
-
-    // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks
-    override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
-    {
-        if (_isBored == false)
+    /*
+        public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo)
         {
-            _idleTime += Time.deltaTime;
+            ResetIdle();
+        }
 
-            if (_idleTime > _timeUntilBored && stateInfo.normalizedTime % 1 < 0.02f)
+        // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks
+        override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+        {
+            if (_isBored == false)
             {
-                _isBored = true;
-                _boredAnimation = UnityEngine.Random.Range(1, _numberOfBoredAnimations + 1);
-                _boredAnimation = _boredAnimation * 2 - 1;
-                animator.SetFloat("BoredIdle", _boredAnimation - 1);
+                _idleTime += Time.deltaTime;
+
+                if (_idleTime > _timeUntilBored && stateInfo.normalizedTime % 1 < 0.02f)
+                {
+                    _isBored = true;
+                    _boredAnimation = UnityEngine.Random.Range(1, _numberOfBoredAnimations + 1);
+                    _boredAnimation = _boredAnimation * 2 - 1;
+                    animator.SetFloat("BoredIdle", _boredAnimation - 1);
+                }
             }
+            animator.SetFloat("BoredIdle", _boredAnimation, 0.2f, Time.deltaTime);
         }
-        animator.SetFloat("BoredIdle", _boredAnimation, 0.2f, Time.deltaTime);
-    }
 
-    private void ResetIdle()
-    {
-        if (_isBored)
+        private void ResetIdle()
         {
-            _boredAnimation--;
+            if (_isBored)
+            {
+                _boredAnimation--;
+            }
+
+            _isBored = false;
+            _idleTime = 0;
         }
 
-        _isBored = false;
-        _idleTime = 0;
+    */
+    
+    public EntityResponse GetResponseFromEntity(string category, EntityResponses responsesWrapper)
+    {
+        // Search the responses list for the given category and get the releavent properties.
+        EntityResponse respObj = new List<EntityResponse> (responsesWrapper.responses).FirstOrDefault(resp => resp.CategoryKey == category);
+        return respObj;
+
     }
 
-*/
 
     public void ReadResult(ConversationResult res)
     {
@@ -102,446 +120,22 @@ public class NPC : MonoBehaviour
         string response = "Please say again.";
 
 
+
         // Check if there is a result and if the top scoring intent is "TellMe"
-        if (res != null && res.result.prediction.topIntent == "TellMe")
+        if (res != null && topIntent == "TellMe")
         {
-            // Loop through all the entities
+            // Check the returned category, find the response, and apply properties.
             foreach (var entity in res.result.prediction.entities)
             {
-                //why is RMIT a good uni?
-                if (entity.category == "Greeting")
-                {
-                    //response = "Hi, welcome!";
-                    response = "Hi, welcome to the school of computing technologies at R-M-I-T, a global university of research, enterprise and innovation.";
-                    animator.SetTrigger("WaveTrigger");
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetFloat("BoredIdle", 1);
-                break;
-                }
-                else if (entity.category == "Research")
-                {
-                    response = "R-M-I-T conducts research that are considered usable and useful, where we driven to explore relevant and high quality knowledge and innovation that people care about.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                }
-                else if (entity.category == "Enrolment")
-                {
-                    response = "In order to enrol to RMIT, enter 'Enrolment RMIT' on your search engine. There you will options below whether its enrolling as new student, continuing student, exchange student and much more. After clicking on your preferred option a guide will be displayed with your given circumstances.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;    
-                }
-                else if (entity.category == "Looking Glass Display")
-                {
-                    response = "The Looking Glass Display is a 3D holographic display that allows users to view and interact with three-dimensional content without needing special glasses. It creates a realistic, immersive experience by rendering multiple perspectives of a 3D image, making it ideal for applications in design, gaming, and visualization.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;    
-                }                
-                else if (entity.category == "Facilities")
-                {
-                    response = "R-M-I-T has cutting edge facilities for supercomputing, robotics, cyber security, AI, and virtual reality.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                }
-                else if (entity.category == "School")
-                {
-                    response = "The school of computing technologies has three main areas- cyber security, artificial intelligence, and interaction and technology.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                }
-                else if (entity.category == "Robots")
-                {
-                    response = "Robotics is one of the main research interests of this lab, and we have several robots here. Rosie, the two-armed swordfighting robot, and Tiago which has an extendable torso and a manipulator arm . We also have an industrial robot arm.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                }
-
-                else if (entity.category == "Management")
-                    {
-                        response = "Please contact Dr Ian Peake, lab manager, for all booking and access enquiries.";
-                        StartCoroutine(UpdateOutputText(response));
-                        HelloWorld.Instance.SynthesizeSpeech(response);
-                        animator.SetTrigger("WaveTrigger");
-                    break;
-                    }
-                    else if (entity.category == "Opening Hours")
-                    {
-                        response = "The official hours are Monday to Friday, nine to five. After-hours and weekend access can be arranged.";
-                        StartCoroutine(UpdateOutputText(response));
-                        HelloWorld.Instance.SynthesizeSpeech(response);
-                        animator.SetTrigger("Offer");
-                        animator.SetFloat("BoredIdle", 3);
-                    break;
-                    }
-                    else if (entity.category == "Staff")
-                    {
-                        response = "Dr Ian Peake is the digital solutions architect, and Dr James Harland is the director of operations.";
-                            HelloWorld.Instance.SynthesizeSpeech(response);
-                            animator.SetTrigger("WaveTrigger");
-                        break;
-                    }
-                    else if (entity.category == "Identity")
-                    {
-                        response = "My name is Vivienne, your virtual concierge. I am here to assist users and visitors of the VXLab at RMIT. Please speak clearly when you address me.";
-                    StartCoroutine(UpdateOutputText(response));
-                        HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                    }
-
-                    else if (entity.category == "NOVA ball")
-                    {
-                        response = "The NOVA motion simulator is a virtual vehicle, combining virtual reality with unlimited motion. It has a three hundred and sixty degree range of motion and is used for flight and racing simulation.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                    }
-                    else if (entity.category == "RACE Hub")
-                    {
-                        response = "The R-M-I-T AWS Supercomputing Hub is a commercial cloud supercomputing facility. It is used for research, digital innovation, education and industry applications, as well as robot soccer and deep racing.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                    }
-                    else if (entity.category == "Virtual Reality")
-                    {
-                        response = "Virtual, augmented and annotated reality is one of the research areas of the VXLab. This includes use of the MetaQuest Pro, surveying, instruction, science, gaming and industry.";
-                   
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                    }
-                    else if (entity.category == "Purpose")
-                    {
-                    response = "The VXLab, or Virtual Experiences Laboratory, is a multi-disciplinary virtual laboratory connecting visualisation and automation facilities in RMIT and industry. We are always working on something new.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                    }
-                    else if (entity.category == "Rokoko Smartsuits")
-                    {
-                        response = "We have facilities that support custom motion capture, using the Rokoko Smartsuit Pro. Please find them in the Gov Lab";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                    }
-                    else if (entity.category == "Laboratory")
-                    {
-                        response = "This is the Virtual Experiences Lab, where we have cutting edge equipment and facilities.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-                    break;
-                    }
-                    else if (entity.category == "GOV Lab")
-                    {
-                        response = "The Gov Lab, or Global Operations Visualization Laboratory, is used for data visualisation and space exploration. It features a tiled display driven by rendering middleware like SAGE and Google Liquid Galaxy.";
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    string trigger = "IsTalking" + getRandomTrigger(1);
-                    string trigger1 = trigger;
-                    animator.SetTrigger(trigger1);
-
-                    break;
-                    }
-                    else if (entity.category == "Tour")
-                    {
-                        //this is hard coded because I didn't feel like looking up five objects individually
-                        response = "Welcome to the Virtual Experiences lab! I am speaking to you from a 32-inch lenticular display. In the race hub, the room parallel to this one on the left, you" +
-                            " will find the 60-inch screen with a lifesize version of me, as well as the Amazon Web Services supercomputing hub. If you'll look behind me, you'll find the GOV lab" +
-                            " which uses state of the art displays for data visualisation. To your right, you'll see Rosie and Tiago, our other residents. Next to them is the planar display screen."
-                            + " Finally, behind you in the corner is our unlimited motion flight simulator. Ask me for more details!";
-                        StartCoroutine(UpdateOutputText("Welcome to the VXLab!"));
-                        HelloWorld.Instance.SynthesizeSpeech(response);
-                        StartCoroutine(TriggerAnimations());
-                     break;
-                    }
-                    //legacy
-                    else if (entity.category == "Point")
-                    {
-                        animator.SetTrigger("Reset");
-                        response = (entity.text);
-                        getDirection(entity.text);
-                    }
-                    else
-                    {
-                        response = "Sorry, I didn't catch that.";
-                        StartCoroutine(UpdateOutputText("..."));
-                        HelloWorld.Instance.SynthesizeSpeech(response);
-                    }
-
-
-
-                #region legacy
-                /*
-                if (entity.category == "Greeting")
-                {
-                    response = "Hi, welcome!";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetTrigger("WaveTrigger");
-                    break;
-                }
-                else if (entity.category == "Research")
-                {
-                    response = "R-M-I-T conducts research that are considered usable and useful, where we driven to explore relevant and high quality knowledge and innovation that people care about.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "Enrolment")
-                {
-                    response = "In order to enrol to RMIT, enter 'Enrolment RMIT' on your search engine. There you will options below whether its enrolling as new student, continuing student, exchange student and much more. After clicking on your preferred option a guide will be displayed with your given circumstances.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "Looking Glass Display")
-                {
-                    response = "The Looking Glass Display is a 3D holographic display that allows users to view and interact with three-dimensional content without needing special glasses. It creates a realistic, immersive experience by rendering multiple perspectives of a 3D image, making it ideal for applications in design, gaming, and visualization.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }                
-                else if (entity.category == "Management")
-                {
-                    response = "Please contact Dr Ian Peake, lab manager, for all booking and access enquiries.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetTrigger("WaveTrigger");
-                    break;
-                }
-                else if (entity.category == "Opening Hours")
-                {
-                    response = "The official hours are Monday to Friday, nine to five. After-hours and weekend access can be arranged.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "Staff")
-                {
-                    response = "Dr Ian Peake is the digital solutions architect, and Dr James Harland is the director of operations.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetTrigger("WaveTrigger");
-                    break;
-                }
-                else if (entity.category == "Identity")
-                {
-                    response = "My name is Vivienne, your virtual concierge. I am here to assist users and visitors of the VXLab at RMIT. Please speak clearly when you address me.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "NOVA ball")
-                {
-                    response = "The NOVA motion simulator is a virtual vehicle, combining virtual reality with unlimited motion. It has a three hundred and sixty degree range of motion and is used for flight and racing simulation.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "RACE Hub")
-                {
-                    response = "The R-M-I-T AWS Supercomputing Hub is a commercial cloud supercomputing facility. It is used for research, digital innovation, education and industry applications, as well as robot soccer and deep racing.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "GOV Lab")
-                {
-                    response = "The Gov Lab, or Global Operations Visualization Laboratory, is used for data visualisation and space exploration. It features a tiled display driven by rendering middleware like SAGE and Google Liquid Galaxy.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "Robots")
-                {
-                    response = "Robotics is one of the main research interests of this lab, and we have several robots here. Rosie, the two-armed swordfighting robot, and Tiago which has an extendable torso and a manipulator arm . We also have an industrial robot arm.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "Virtual Reality")
-                {
-                    response = "Virtual, augmented and annotated reality is one of the research areas of the VXLab. This includes use of the MetaQuest Pro, surveying, instruction, science, gaming and industry.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "Purpose")
-                {
-                    response = "The VXLab, or Virtual Experiences Laboratory, is a multi-disciplinary virtual laboratory connecting visualisation and automation facilities in RMIT and industry. We are always working on something new.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "Rokoko Smartsuits")
-                {
-                    response = "We have facilities that support custom motion capture, using the Rokoko Smartsuit Pro. Please find them in the Gov Lab";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "Laboratory")
-                {
-                    response = "This is the Virtual Experiences  Lab, where we have cutting edge equipment and facilities.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                else if (entity.category == "Tour")
-                {
-                    //response = "Tour this, bitch.";
-                    response = "Welcome to the Virtual Experiences lab! I am speaking to you from a 32-inch lenticular display. In the race hub, the room parallel to this one on the left, you" +
-                        " will find the 60-inch screen with a lifesize version of me, as well as the Amazon Web Services supercomputing hub. If you'll look behind me, you'll find the GOV lab" +
-                        " which uses state of the art displays for data visualisation. To your right, you'll see Rosie and Tiago, our other residents. Next to them is the planar display screen."
-                        + " Finally, behind you in the corner is our unlimited motion flight simulator. Ask me for more details!";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                    break;
-                }
-                //legacy
-                else if (entity.category == "Point")
-                {
-                    response = (entity.text);
-                    getDirection(entity.text);
-                }
-                else if (entity.category == "Facilities")
-                {
-                    response = "LALALALALA FACILITIES";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                }
-                else
-                {
-                    response = "Sorry, I didn't catch that.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                }
-                */
-                #endregion
+                EntityResponse respObj = GetResponseFromEntity(entity.category, _responses);
+                response = respObj.TextResponse;
+                animator.SetTrigger(respObj.AnimationTrigger + getRandomTrigger(1));
             }
             Debug.Log(response);
-        }
-        //location section- get direction here 
-        //updated to work with database
-        else if (res != null && res.result.prediction.topIntent == "Location")
-        {
-            foreach (var entity in res.result.prediction.entities)
-            {
 
-                LabAsset lab_asset = ObjectManagement.GetObject(entity.category);
-                if (lab_asset != null)
-                {
-                    response = lab_asset.location_info;
-                    Debug.Log("response: " + response);
-                    if (response == null)
-                    {
-                        response = "Haha, this is a bug!";
-                    }
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    Direction dir_to_point = getBestDirection(lab_asset.getPosition());
-                    getEnumDirection(dir_to_point);
-                }
-                else
-                {
-                    StartCoroutine(UpdateOutputText(response));
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                }
-                #region legacy
-                /*
-                if (entity.text == "Rosie")
-                {
-                    response = "Rosie is the red robot to your right.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    getDirection(entity.text);
-                    //animator.SetBool("IsTalking", true);
-                }
-                else if (entity.text == "Tiago")
-                {
-                    response = "Tiago is the white robot to your right.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                }
-                else if (entity.category == "NOVA ball")
-                {
-                    response = "The NOVA flight simulator is behind you, behind the screen.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                }
-                else if (entity.category == "GOV Lab")
-                {
-                    response = "The Gov Lab is the room behind me, slightly to the right.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                }
-                else if (entity.category == "RACE Hub")
-                {
-                    response = "The RACE hub is to the left, in the room parallel to this one.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                }
-                else if (entity.category == "Rokoko Smartsuits")
-                {
-                    response = "Please find the Rokoko smartsuits in the Gov Lab, behind me, slightly to the right.";
-                    HelloWorld.Instance.SynthesizeSpeech(response);     
-                    animator.SetBool("IsTalking", true);
-                }
-                else if (entity.category == "Facilities")
-                {
-                    response = "UNGA BUNGA";
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                    animator.SetBool("IsTalking", true);
-                }
-                else
-                {
-                    HelloWorld.Instance.SynthesizeSpeech(response);
-                }
-                */
-                #endregion
-            }
         }
-        else if (res != null && res.result.prediction.topIntent == "Tell me")
+
+        else if (res != null && topIntent == "Tell me")
         {
             response = "Lalalala";
             StartCoroutine(UpdateOutputText(response));
@@ -598,7 +192,7 @@ public class NPC : MonoBehaviour
     public string getRandomTrigger(int option)
     {
         string idx;
-        int[] myTalkingAnims = { 0, 1};
+        int[] myTalkingAnims = { 0, 1 };
         int[] myIdleAnims = { 1, 2, 3 };
         int[] array;
         array = option > 0 ? myTalkingAnims : myIdleAnims;
@@ -659,9 +253,9 @@ public class NPC : MonoBehaviour
         animator.SetTrigger("WaveTrigger2");
         yield return new WaitForSeconds(9);
         animator.SetTrigger("LeftTrigger");
-        yield return new WaitForSeconds(11); 
+        yield return new WaitForSeconds(11);
         animator.SetTrigger("Behind");
-        yield return new WaitForSeconds(7f); 
+        yield return new WaitForSeconds(7f);
         animator.SetTrigger("RightTrigger");
         yield return new WaitForSeconds(6);
         animator.SetTrigger("Forward");
