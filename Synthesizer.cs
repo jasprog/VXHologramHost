@@ -1,6 +1,7 @@
-//Vladislava Simakov
+// Jasper
 using System;
 using System.Threading;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Microsoft.CognitiveServices.Speech;
@@ -35,20 +36,42 @@ public class HelloWorld : MonoBehaviour
             waitingForSpeak = true;
         }
 
+        // Limit the string length to avoid overloading the synthesizer.
+        int maxLength = 1000; // Define the maximum length for each segment
+        var segments = SplitTextIntoChunks(text, maxLength);
+
+        foreach (var segment in segments)
+        {
+            try
+            {
+                SynthesizeSegment(segment);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error synthesizing segment: {ex.Message}");
+                message = $"Error: {ex.Message}";
+            }
+        }
+
+        lock (threadLocker)
+        {
+            waitingForSpeak = false;
+        }
+    }
+
+    private void SynthesizeSegment(string text)
+    {
         string newMessage = null;
         var startTime = DateTime.Now;
 
         // Starts speech synthesis, and returns once the synthesis is started.
         using (var result = synthesizer.StartSpeakingTextAsync(text).Result)
         {
-            // Native playback is not supported on Unity yet (currently only supported on Windows/Linux Desktop).
-            // Use the Unity API to play audio here as a short term solution.
-            // Native playback support will be added in the future release.
             var audioDataStream = AudioDataStream.FromResult(result);
             var isFirstAudioChunk = true;
             var audioClip = AudioClip.Create(
                 "Speech",
-                SampleRate * 600, // Can speak 10mins audio as maximum
+                SampleRate * 60, // Limit to 60 seconds per segment
                 1,
                 SampleRate,
                 true,
@@ -87,7 +110,6 @@ public class HelloWorld : MonoBehaviour
 
             audioSource.clip = audioClip;
             audioSource.Play();
-
         }
 
         lock (threadLocker)
@@ -96,8 +118,14 @@ public class HelloWorld : MonoBehaviour
             {
                 message = newMessage;
             }
+        }
+    }
 
-            waitingForSpeak = false;
+    private IEnumerable<string> SplitTextIntoChunks(string text, int maxLength)
+    {
+        for (int i = 0; i < text.Length; i += maxLength)
+        {
+            yield return text.Substring(i, Math.Min(maxLength, text.Length - i));
         }
     }
 
@@ -107,7 +135,6 @@ public class HelloWorld : MonoBehaviour
 
         message1 = "Hello";
         message = "Click button to synthesize speech";
-
 
         // Creates an instance of a speech config with specified subscription key and service region.
         speechConfig = SpeechConfig.FromSubscription(SubscriptionKey, Region);
